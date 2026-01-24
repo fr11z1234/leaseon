@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Montserrat', sans-serif;
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.input-own {
+  @apply bg-white border border-gray-300 h-[45px] text-sm rounded-md px-2 hover:border-blue-300 focus-visible:border-blue-500 outline-none;
+}
+
+.primary-button-icon {
+  @apply flex items-center px-6 py-3.5 bg-blue-600 text-white rounded-sm min-w-fit hover:opacity-80 transition ease-in duration-100 cursor-pointer gap-3 text-center;
+}
+
+.primary-button {
+  @apply flex items-center justify-center px-6 py-3.5 bg-blue-600 text-white rounded-sm min-w-fit hover:opacity-80 transition ease-in duration-100 cursor-pointer gap-3 text-center;
+}
+
+.secondary-cancel-button {
+  @apply flex items-center justify-center px-6 py-3.5 bg-red-100 text-red-500 rounded-sm min-w-fit hover:opacity-80 transition ease-in duration-100 cursor-pointer gap-3 text-center;
+}
+
+.border-button {
+  @apply flex items-center justify-center px-6 py-3.5 text-blue-500 border rounded-sm border-blue-500 min-w-fit hover:opacity-60 transition ease-in duration-100 cursor-pointer gap-3 text-center;
+}
+
+label {
+  @apply text-slate-700 text-sm;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.fade-in-visible {
+  animation: fadeIn 1s forwards ease-out;
+  visibility: visible;
+}
+
+@keyframes fadeInNoTranslate {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in-clean-visible {
+  animation: fadeInNoTranslate 1s forwards ease-out;
+  visibility: visible;
+}
+
+
+.text-h1 {
+  @apply text-[28px] leading-normal font-bold;
+
+  @apply md:text-[70px];
+}
+
+.text-h2 {
+  @apply text-[25px] leading-normal font-bold;
+
+  @apply md:text-[40px];
+}
+
+.text-h3 {
+  @apply text-[22px] leading-normal font-bold;
+
+  @apply md:text-[26px];
+}
+
+.text-subtitle {
+  @apply text-[26px] leading-normal font-medium;
+}
+
+.text-list {
+  @apply text-[15px] font-semibold leading-[26px];
+}
+
+.text-chip {
+  @apply text-[14px] font-semibold leading-[26px];
+}
+
+.text-text {
+  @apply text-[15px] font-normal leading-[26px];
+}
+
+.text-card {
+  @apply text-[21px] font-bold leading-normal;
+}
+
+.text-underline {
+  @apply text-[13px] font-normal leading-[26px];
+}
+
+.text-list-attr {
+  @apply text-[13px] font-normal leading-[26px];
+}
+
+.text-reward-chip {
+  @apply text-[12px] font-semibold leading-[20px];
+}
+
+
+@keyframes expandAndFadeIn {
+  0% {
+    height: 0px;
+    opacity: 0;
+    overflow: hidden;
+  }
+
+  10% {
+    opacity: 1;
+    overflow: hidden;
+  }
+
+  99% {
+    height: 450px;
+    opacity: 1;
+    overflow: hidden;
+  }
+
+  100% {
+    height: auto;
+    overflow: initial;
+    opacity: 1;
+  }
+}
+
+.animate-filter {
+  animation: expandAndFadeIn 0.4s;
+  animation-fill-mode: forwards;
+}
+
+
+@keyframes expandAndFadeInSmall {
+  0% {
+    height: 0px;
+    opacity: 0;
+    overflow: hidden;
+  }
+
+  10% {
+    opacity: 1;
+    overflow: hidden;
+  }
+
+  99% {
+    height: 200px;
+    opacity: 1;
+    overflow: hidden;
+  }
+
+  100% {
+    height: auto;
+    overflow: initial;
+    opacity: 1;
+  }
+}
+
+.animate-filter-small {
+  animation: expandAndFadeInSmall 0.4s;
+  animation-fill-mode: forwards;
+}
+
+.loader {
+  width: 25px;
+  height: 25px;
+  border: 5px solid #FFF;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+.loader.dark {
+  border: 5px solid #171717;
+  border-bottom-color: white;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
