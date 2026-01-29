@@ -4,8 +4,37 @@ import { listingStore } from "@/stores/ListingStore";
 
 export default function () {
     const contactDetails = listingStore(s => s.listingContact);
+    const contactFetched = listingStore(s => s.contactFetched);
+    const loading = listingStore(s => s.loading);
+    
+    // Show loading state
+    if (loading) {
+        return (
+            <div className='w-full flex flex-col p-10 bg-white border-gray-200 border rounded-sm'>
+                <p className='text-slate-600'>Henter kontaktinformationer...</p>
+            </div>
+        );
+    }
+    
+    // Don't show anything if contact details haven't been requested yet
+    if (!contactFetched) {
+        return null;
+    }
+    
+    // Contact was requested but not found
+    if (!contactDetails || !contactDetails.email) {
+        return (
+            <div className='w-full flex flex-col p-10 bg-white border-gray-200 border rounded-sm'>
+                <div className='w-full flex flex-col justify-start items-start gap-4'>
+                    <h2 className='text-2xl text-slate-900'>Kontaktinformationer</h2>
+                    <p className='text-slate-600'>Kontaktinformationer er ikke tilgængelige for denne annonce.</p>
+                </div>
+            </div>
+        );
+    }
+    
     return (
-        <div className={'w-full flex flex-col p-10 bg-white border-gray-200 border rounded-sm' + (contactDetails.email !== '' ? '' : ' hidden')}>
+        <div className='w-full flex flex-col p-10 bg-white border-gray-200 border rounded-sm'>
             <div className='w-full flex flex-col justify-start items-start gap-4  '>
                 <div className='flex flex-row justify-between w-full'>
                     <h2 className='text-2xl text-slate-900'>Kontaktinformationer</h2>

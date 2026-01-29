@@ -24,7 +24,8 @@ type Search = {
 type State = {
     count: number
     listing: Listing
-    listingContact: ListingContact
+    listingContact: ListingContact | null
+    contactFetched: boolean
     listings: Listing[]
     highestDiscounts: Listing[]
     newest: Listing[]
@@ -65,7 +66,8 @@ const searchDefault: Search = {
 export const listingStore = create<State & Actions>((set, get) => ({
     loading: false,
     listing: DefaultListing(),
-    listingContact: DefaultListingContact(),
+    listingContact: null,
+    contactFetched: false,
     listings: [],
     highestDiscounts: [],
     newest: [],
@@ -73,6 +75,9 @@ export const listingStore = create<State & Actions>((set, get) => ({
     prev_search: '',
     fetch: async (id) => {
         try {
+            // Reset contact state when fetching new listing
+            await set({ listingContact: null, contactFetched: false });
+            
             const { data, error } = await supabase
                 .from('carlistings')
                 .select('*, listingimages(image_path, is_primary), carbrands(brand_id, brand_name), carlistingequipment(equipment_id), equipment(equipment_id, name)')
@@ -82,54 +87,75 @@ export const listingStore = create<State & Actions>((set, get) => ({
             data.images = data.listingimages.map((i: any) => i.image_path);
             data.equipment = data.equipment.map((e: any) => e.name);
             await set({ listing: data });
-            get().fetchContactDetails(data.user_id);
         } catch (e) {
             console.error(e)
         }
     },
     fetchContactDetails: async (id) => {
-        await set({ loading: true });
+        await set({ loading: true, contactFetched: false });
         try {
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('user_id', id)
-                .single();
-            await set({ listingContact: data });
+                .maybeSingle();
+            await set({ listingContact: data, contactFetched: true });
         } catch (e) {
             console.error(e)
+            await set({ contactFetched: true });
         }
         await set({ loading: false });
     },
     fetchHighestDiscounts: async () => {
         try {
-
             const { data, error } = await supabase
                 .from('carlistings')
                 .select('*, listingimages(image_path, is_primary), carbrands(brand_name)')
                 .eq('be_listed', 1)
                 .order('discount', { ascending: false })
                 .limit(4);
-            const cleaned_data = data?.map(d => { return { ...d, brand_name: d.carbrands.brand_name, images: d.listingimages.map((i: any) => i.image_path) } })
-            await set({ highestDiscounts: cleaned_data as Listing[] });
-
+            
+            if (error) {
+                console.error('Error fetching highest discounts:', error);
+                return;
+            }
+            
+            const cleaned_data = data?.map(d => ({ 
+                ...d, 
+                brand_name: d.carbrands?.brand_name || 'Ukendt',
+                listingimages: d.listingimages || [],
+                images: (d.listingimages || []).map((i: any) => i.image_path) 
+            })) || [];
+            
+            set({ highestDiscounts: cleaned_data as Listing[] });
         } catch (e) {
-            console.error(e)
+            console.error('Error in fetchHighestDiscounts:', e)
         }
     },
     fetchNewest: async () => {
         try {
-
             const { data, error } = await supabase
                 .from('carlistings')
                 .select('*, listingimages(image_path, is_primary), carbrands(brand_name)')
                 .eq('be_listed', 1)
                 .order('listing_id', { ascending: false })
                 .limit(4);
-            const cleaned_data = data?.map(d => { return { ...d, brand_name: d.carbrands.brand_name, images: d.listingimages.map((i: any) => i.image_path) } })
-            await set({ newest: cleaned_data as Listing[] });
+            
+            if (error) {
+                console.error('Error fetching newest:', error);
+                return;
+            }
+            
+            const cleaned_data = data?.map(d => ({ 
+                ...d, 
+                brand_name: d.carbrands?.brand_name || 'Ukendt',
+                listingimages: d.listingimages || [],
+                images: (d.listingimages || []).map((i: any) => i.image_path) 
+            })) || [];
+            
+            set({ newest: cleaned_data as Listing[] });
         } catch (e) {
-            console.error(e)
+            console.error('Error in fetchNewest:', e)
         }
     },
     resetFilters: () => {
