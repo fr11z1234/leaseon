@@ -1,3 +1,4 @@
+// Trigger fresh Vercel deployment
 import AboutSection from "@/components/Pages/Home/AboutSection";
 import DiscountSection from "@/components/Pages/Home/DiscountsSection";
 import HeroSection from "@/components/Pages/Home/HeroSection";
