@@ -20,9 +20,7 @@ export default function ({ selectModel, selected_models, selected_brand }: Searc
         }
     }, [selected_brand]);
 
-    const flatten = Object.values(models).flat();
-
-    const search_models = flatten.filter(
+    const search_models = models.filter(
         model => selected_models.includes(model?.value) || model?.value?.toLowerCase().includes(search.toLowerCase())
     );
 

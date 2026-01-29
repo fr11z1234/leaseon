@@ -49,6 +49,8 @@ export const carStore = create<State & Actions>((set, get) => ({
     },
     fetchMultipleModels: async (brands) => {
         set({ models: [] });
+        const allModels: { value: string, label: string }[] = [];
+
         for (let i = 0; i < brands.length; i++) {
             const brand = brands[i];
 
@@ -56,14 +58,17 @@ export const carStore = create<State & Actions>((set, get) => ({
                 .rpc('get_car_models_by_brand', { brand_name_param: brand });
 
             if (error) {
-                set({ models: [] });
-                return;
+                console.error('Error fetching models for brand:', brand, error);
+                continue;
             }
 
-            const modelOptions = data.map((model: { model: string }) => ({ value: model.model, label: model.model }));
-            set({ models: [...get().models, modelOptions] });
-
+            if (data && data.length > 0) {
+                const modelOptions = data.map((model: { model: string }) => ({ value: model.model, label: model.model }));
+                allModels.push(...modelOptions);
+            }
         }
+
+        set({ models: allModels });
     },
     fetchEquipment: async () => {
         const { data: equipments, error } = await supabase.from('equipment').select();

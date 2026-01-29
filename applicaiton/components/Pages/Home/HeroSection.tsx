@@ -114,7 +114,7 @@ export default function TopFilter() {
 
     return (
         <div className="w-full bg-custom-hero py-32 px-2 flex flex-col justify-center items-center space-y-6 relative z-0 sm:py-52">
-            <p className="text-50 text-sm text-slate-900 text-center">De bedste leasing tilbud</p>
+            <p className="text-50 text-xl lg:text-2xl text-blue-500 text-center">De bedste leasing tilbud</p>
             <h1 className="text-50 text-5xl text-slate-900 font-bold text-center">Find din drømme bil</h1>
 
             <div className="flex flex-col p-4 w-full gap-2 sm:w-[950px] sm:flex-row sm:gap-0">
