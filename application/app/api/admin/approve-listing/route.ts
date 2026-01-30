@@ -2,7 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Service role key bypasses RLS - used for admin operations
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Supabase Storage URL for images
 const SUPABASE_STORAGE_URL = `${supabaseUrl}/storage/v1/object/public/images`;
@@ -120,15 +122,19 @@ async function verifyAdmin(supabase: any, authHeader: string | null): Promise<{ 
  * Approve a listing and add to Facebook post queue for n8n webhook
  */
 export async function POST(request: NextRequest) {
-    const supabase: any = createClient(supabaseUrl, supabaseKey);
+    // Use anon key for auth verification
+    const supabaseAuth: any = createClient(supabaseUrl, supabaseAnonKey);
 
     // Verify admin status
     const authHeader = request.headers.get('authorization');
-    const { isAdmin, error: authError } = await verifyAdmin(supabase, authHeader);
+    const { isAdmin, error: authError } = await verifyAdmin(supabaseAuth, authHeader);
 
     if (!isAdmin) {
         return NextResponse.json({ error: authError }, { status: 401 });
     }
+
+    // Use service role key for admin operations (bypasses RLS)
+    const supabase: any = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get listing ID from request body
     const body = await request.json();
@@ -201,15 +207,19 @@ export async function POST(request: NextRequest) {
  * Get all pending listings for approval
  */
 export async function GET(request: NextRequest) {
-    const supabase: any = createClient(supabaseUrl, supabaseKey);
+    // Use anon key for auth verification
+    const supabaseAuth: any = createClient(supabaseUrl, supabaseAnonKey);
 
     // Verify admin status
     const authHeader = request.headers.get('authorization');
-    const { isAdmin, error: authError } = await verifyAdmin(supabase, authHeader);
+    const { isAdmin, error: authError } = await verifyAdmin(supabaseAuth, authHeader);
 
     if (!isAdmin) {
         return NextResponse.json({ error: authError }, { status: 401 });
     }
+
+    // Use service role key for admin operations (bypasses RLS)
+    const supabase: any = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch pending listings
     const { data: listings, error } = await supabase
