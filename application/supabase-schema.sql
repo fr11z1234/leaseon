@@ -308,6 +308,9 @@ CREATE TABLE IF NOT EXISTS fb_post_queue (
     month_payment DECIMAL(20,0),
     km_status INTEGER,
     fuel_type VARCHAR(255),
+    horsepower INTEGER,
+    transmission_type VARCHAR(50),
+    equipment TEXT,  -- Komma-separeret liste af udstyr
     listing_url VARCHAR(500),
     primary_image_url VARCHAR(500),
     status VARCHAR(20) DEFAULT 'pending',  -- pending, processed, failed

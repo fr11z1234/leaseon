@@ -19,9 +19,12 @@ interface ListingData {
     month_payment?: number;
     km_status?: number;
     fuel_type?: string;
+    horsepower?: number;
+    transmission_type?: string;
     brand_name?: string;
     carbrands?: { brand_name: string };
     listingimages?: { image_path: string; is_primary: number }[];
+    equipment?: { name: string }[];
 }
 
 /**
@@ -57,6 +60,9 @@ async function addToPostQueue(
     const listingUrl = `https://leaseon.dk/biler/${listing.listing_id}`;
     const primaryImageUrl = getPrimaryImageUrl(listing);
 
+    // Konverter equipment array til komma-separeret string
+    const equipmentList = listing.equipment?.map(e => e.name).join(', ') || '';
+
     const queueData = {
         listing_id: listing.listing_id,
         brand_name: brandName,
@@ -68,6 +74,9 @@ async function addToPostQueue(
         month_payment: listing.month_payment || 0,
         km_status: listing.km_status || 0,
         fuel_type: listing.fuel_type || '',
+        horsepower: listing.horsepower || 0,
+        transmission_type: listing.transmission_type || '',
+        equipment: equipmentList,
         listing_url: listingUrl,
         primary_image_url: primaryImageUrl,
         status: 'pending'
@@ -148,10 +157,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'action must be "approve" or "reject"' }, { status: 400 });
     }
 
-    // Fetch the listing with images
+    // Fetch the listing with images and equipment
     const { data: listing, error: fetchError } = await supabase
         .from('carlistings')
-        .select('*, carbrands(brand_name), listingimages(image_path, is_primary)')
+        .select('*, carbrands(brand_name), listingimages(image_path, is_primary), equipment(name)')
         .eq('listing_id', listingId)
         .single();
 
