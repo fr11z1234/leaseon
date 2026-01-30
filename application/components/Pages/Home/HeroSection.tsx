@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation'
 import { carStore } from '@/stores/CarStore';
 import carImageHero1 from '@/img/posrche-hero.png';
@@ -117,14 +118,19 @@ export default function TopFilter() {
             <p className="text-50 text-xl lg:text-2xl text-blue-500 text-center">De bedste leasing tilbud</p>
             <h1 className="text-50 text-5xl text-slate-900 font-bold text-center">Find din drømme bil</h1>
 
-            <div className="flex flex-col p-4 w-full gap-2 sm:w-[950px] sm:flex-row sm:gap-0">
+            <div className="flex flex-col p-4 w-full gap-2 lg:w-[950px] lg:flex-row lg:gap-0">
 
-                <Select styles={customStyles} options={brandsOptions} value={selectedBrand} onChange={setSelectedBrand} isClearable isSearchable placeholder="Mærke" className="w-full sm:w-1/4" />
-                <Select styles={customStyles} options={modelsOptions} value={selectedModel} onChange={setSelectedModel} isClearable isSearchable placeholder="Model" className="w-full sm:w-1/4" isDisabled={!selectedBrand} />
-                <Select styles={customStyles} options={gearTypeOptions} value={selectedGearType} onChange={setSelectedGearType} isClearable isSearchable placeholder="Gearkasse" className="w-full sm:w-1/4" />
-                <Select styles={customStyles} options={fuelTypeOptions} value={selectedFuelType} onChange={setSelectedFuelType} isClearable isSearchable placeholder="Brændstof" className="w-full sm:w-1/4" />
-                <button className="bg-blue-500 text-white mt-4 min-h-[60px] rounded p-2 sm:w-1/5 sm:ml-3 sm:mt-0 sm:min-h-0 ease-in-out transition hover:bg-blue-400"
-                    onClick={searchCars}>Søg i biler</button>
+                <Select styles={customStyles} options={brandsOptions} value={selectedBrand} onChange={setSelectedBrand} isClearable isSearchable placeholder="Mærke" className="w-full lg:w-1/4" />
+                <Select styles={customStyles} options={modelsOptions} value={selectedModel} onChange={setSelectedModel} isClearable isSearchable placeholder="Model" className="w-full lg:w-1/4" isDisabled={!selectedBrand} />
+                <Select styles={customStyles} options={gearTypeOptions} value={selectedGearType} onChange={setSelectedGearType} isClearable isSearchable placeholder="Gearkasse" className="w-full lg:w-1/4" />
+                <Select styles={customStyles} options={fuelTypeOptions} value={selectedFuelType} onChange={setSelectedFuelType} isClearable isSearchable placeholder="Brændstof" className="w-full lg:w-1/4" />
+                <div className="flex flex-col gap-3 w-full lg:w-1/5 lg:ml-3 lg:flex-row lg:items-center lg:gap-0">
+                    <button className="w-full bg-blue-500 text-white mt-4 min-h-[60px] rounded p-2 lg:mt-0 lg:min-h-[54px] ease-in-out transition hover:bg-blue-400"
+                        onClick={searchCars}>Søg i biler</button>
+                    <Link href="/dashboard/biler/opret" className="border-button w-full min-h-[60px] flex items-center justify-center rounded p-2 lg:hidden">
+                        Opret annonce
+                    </Link>
+                </div>
 
             </div>
             {heroImage && <Image priority={true} src={heroImage} alt="Car" className="w-full h-auto absolute -bottom-12 sm:-bottom-28 max-w-4xl fade-in fade-in-visible sm:w-3/4" unoptimized />}

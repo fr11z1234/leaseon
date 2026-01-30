@@ -68,12 +68,12 @@ const Sidebar = () => {
                 aria-hidden="true"
             />
 
-            {/* Sidebar panel - portaled to body so never hidden by nav bar */}
+            {/* Sidebar panel - full screen on mobile, max-w-sm on desktop */}
             <aside
                 ref={sidebarRef}
                 className={`
                     fixed top-0 left-0 h-full z-[60]
-                    w-full max-w-sm
+                    w-full sm:max-w-sm
                     bg-white
                     shadow-xl
                     flex flex-col
@@ -84,6 +84,16 @@ const Sidebar = () => {
                 <div className="flex flex-col h-full overflow-y-auto">
                     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 shrink-0">
                         <Image src={logo} alt="Leaseon" className="w-32 sm:w-40 h-auto" />
+                        <button
+                            type="button"
+                            onClick={toggleSidebar}
+                            className="flex items-center justify-center w-10 h-10 rounded-md text-slate-600 hover:bg-slate-100 transition-colors"
+                            aria-label="Luk menu"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
 
                     <nav className="flex flex-col p-4 sm:p-6 gap-1">
@@ -128,8 +138,8 @@ const Sidebar = () => {
                             {/* Indhold: tekst + pil */}
                             <span className="relative flex flex-col justify-between h-full min-h-[180px] p-4 text-white">
                                 <span className="flex flex-col gap-0.5">
-                                    <span className="text-lg sm:text-xl font-bold leading-tight">Gratis Annonce</span>
-                                    <span className="text-xs sm:text-sm font-normal opacity-95">Tidsbegrænset tilbud</span>
+                                    <span className="text-lg sm:text-xl font-bold leading-tight">Opret en gratis annonce</span>
+                                    <span className="text-xs sm:text-sm font-normal opacity-95">Skynd dig, det er ikke gratis forevigt!</span>
                                 </span>
                                 <span className="flex items-center justify-between mt-auto pt-3">
                                     <span className="text-sm font-medium">Find en ny leasingtager</span>
