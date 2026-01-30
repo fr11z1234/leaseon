@@ -11,8 +11,7 @@ export default function Menu() {
 
     useEffect(() => {
         const handleScroll = () => {
-            const isScrolled = window.scrollY > 0;
-            setIsScrolled(isScrolled);
+            setIsScrolled(window.scrollY > 10);
         };
 
         window.addEventListener('scroll', handleScroll);
@@ -20,13 +19,23 @@ export default function Menu() {
     }, []);
 
     return (
-        <div className={`fixed top-0 left-0 w-full h-30 flex items-center z-50 justify-center px-4 sm:px-0 ease-in-out transition ${isScrolled ? 'bg-white' : 'bg-none'}`}>
-            <div className='w-full flex flex-row max-w-laptop justify-between items-center py-2'>
-                <Link href="/">
-                    <Image src={logo} alt="Leaseon" className="w-[200px] h-auto" />
+        <header className={`
+            fixed top-0 left-0 right-0 z-50
+            flex items-center justify-center
+            h-16 sm:h-[72px]
+            px-4 sm:px-6
+            transition-all duration-300 ease-out
+            ${isScrolled 
+                ? 'bg-white/95 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-b border-slate-200/80' 
+                : 'bg-transparent'
+            }
+        `}>
+            <div className='w-full max-w-laptop flex flex-row justify-between items-center'>
+                <Link href="/" className="flex items-center shrink-0 transition-opacity hover:opacity-90">
+                    <Image src={logo} alt="Leaseon" className="w-[160px] sm:w-[200px] h-auto" priority />
                 </Link>
-                < Sidebar />
+                <Sidebar />
             </div>
-        </div>
+        </header>
     );
-};
+}
