@@ -403,6 +403,9 @@ export const userStore = create<State & Actions>((set, get) => ({
                 offer_validity, equipment, images, primaryImageIndex
             } = input;
 
+            // Determine Facebook approval status based on discount
+            const fb_approval_status = discount && Number(discount) > 0 ? 'pending' : 'not_eligible';
+
             const res = await supabase
                 .from('carlistings')
                 .insert({
@@ -431,6 +434,7 @@ export const userStore = create<State & Actions>((set, get) => ({
                     discount,
                     reserve_price,
                     offer_validity,
+                    fb_approval_status,
                     user_id: userId
                 })
                 .eq('user_id', userId)

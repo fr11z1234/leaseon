@@ -1,3 +1,5 @@
+export type FbApprovalStatus = 'not_eligible' | 'pending' | 'posted' | 'rejected';
+
 export type Listing = {
     listing_id: number
     be_listed: number
@@ -27,6 +29,8 @@ export type Listing = {
     restvalue: number
     instant_takeover: number
     primaryImage: any | null
+    fb_approval_status?: FbApprovalStatus
+    fb_posted_at?: string | null
 }
 
 export const toListing = (supabaseListing: any): Listing => {
@@ -40,7 +44,7 @@ export const toListing = (supabaseListing: any): Listing => {
         horsepower: supabaseListing.horsepower,
         discount: supabaseListing.discount,
         model_year: supabaseListing.model_year,
-        images: supabaseListing.listingimages.map((image: any) => image.image_path) || [],
+        images: supabaseListing.listingimages?.map((image: any) => image.image_path) || [],
         brand_name: supabaseListing.brand_name,
         brand_id: supabaseListing.brand_id,
         brand: supabaseListing.brand,
@@ -58,7 +62,9 @@ export const toListing = (supabaseListing: any): Listing => {
         leasing_type: supabaseListing.leasing_type,
         restvalue: supabaseListing.restvalue,
         instant_takeover: supabaseListing.instant_takeover,
-        primaryImage: supabaseListing.listingimages.find((image: any) => image.is_primary)?.image_path || null,
+        primaryImage: supabaseListing.listingimages?.find((image: any) => image.is_primary)?.image_path || null,
+        fb_approval_status: supabaseListing.fb_approval_status || 'not_eligible',
+        fb_posted_at: supabaseListing.fb_posted_at || null,
     };
 };
 export default function (): Listing {
@@ -90,6 +96,8 @@ export default function (): Listing {
         leasing_type: 'Privat',
         restvalue: 0,
         instant_takeover: 0,
-        primaryImage: null
+        primaryImage: null,
+        fb_approval_status: 'not_eligible',
+        fb_posted_at: null
     })
 }

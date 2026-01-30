@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     city VARCHAR(255),
     facebook_profile VARCHAR(255),
     profile_picture_path VARCHAR(255),
+    is_admin BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -62,6 +63,8 @@ CREATE TABLE IF NOT EXISTS carlistings (
     reserve_price DECIMAL(10,2),
     tax_included SMALLINT DEFAULT 0,
     offer_validity DATE,
+    fb_approval_status VARCHAR(20) DEFAULT 'not_eligible',
+    fb_posted_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -88,6 +91,7 @@ CREATE TABLE IF NOT EXISTS listingimages (
 CREATE INDEX IF NOT EXISTS idx_carlistings_brand_id ON carlistings(brand_id);
 CREATE INDEX IF NOT EXISTS idx_carlistings_user_id ON carlistings(user_id);
 CREATE INDEX IF NOT EXISTS idx_carlistings_be_listed ON carlistings(be_listed);
+CREATE INDEX IF NOT EXISTS idx_carlistings_fb_approval_status ON carlistings(fb_approval_status);
 CREATE INDEX IF NOT EXISTS idx_listingimages_listing_id ON listingimages(listing_id);
 CREATE INDEX IF NOT EXISTS idx_carlistingequipment_listing_id ON carlistingequipment(listing_id);
 CREATE INDEX IF NOT EXISTS idx_carlistingequipment_equipment_id ON carlistingequipment(equipment_id);
@@ -147,6 +151,17 @@ CREATE POLICY "Brugere kan opdatere egne annoncer" ON carlistings
 
 CREATE POLICY "Brugere kan slette egne annoncer" ON carlistings
     FOR DELETE USING (auth.uid() = user_id);
+
+-- Admin Policies for Facebook godkendelse
+CREATE POLICY "Admin kan se alle annoncer" ON carlistings
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin = true)
+    );
+
+CREATE POLICY "Admin kan opdatere fb_status" ON carlistings
+    FOR UPDATE USING (
+        EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin = true)
+    );
 
 -- LISTINGIMAGES Policies
 CREATE POLICY "Alle kan se billeder" ON listingimages
@@ -275,3 +290,83 @@ INSERT INTO equipment (name) VALUES
     ('Vognbaneassistent'),
     ('Xenonlygter')
 ON CONFLICT DO NOTHING;
+
+-- =============================================
+-- 7. FACEBOOK POST KØ (til n8n webhook)
+-- =============================================
+
+-- Tabel til Facebook post kø - n8n webhook lytter på denne
+CREATE TABLE IF NOT EXISTS fb_post_queue (
+    id SERIAL PRIMARY KEY,
+    listing_id INTEGER REFERENCES carlistings(listing_id) ON DELETE CASCADE,
+    brand_name VARCHAR(255),
+    model VARCHAR(255),
+    variant VARCHAR(255),
+    model_year INTEGER,
+    discount DECIMAL(10,2),
+    payment DECIMAL(10,2),
+    month_payment DECIMAL(20,0),
+    km_status INTEGER,
+    fuel_type VARCHAR(255),
+    listing_url VARCHAR(500),
+    primary_image_url VARCHAR(500),
+    status VARCHAR(20) DEFAULT 'pending',  -- pending, processed, failed
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    processed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Index for hurtig søgning på status
+CREATE INDEX IF NOT EXISTS idx_fb_post_queue_status ON fb_post_queue(status);
+
+-- RLS for fb_post_queue
+ALTER TABLE fb_post_queue ENABLE ROW LEVEL SECURITY;
+
+-- Admin kan se og opdatere køen
+CREATE POLICY "Admin kan se fb_post_queue" ON fb_post_queue
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin = true)
+    );
+
+CREATE POLICY "Admin kan indsætte i fb_post_queue" ON fb_post_queue
+    FOR INSERT WITH CHECK (
+        EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin = true)
+    );
+
+CREATE POLICY "Admin kan opdatere fb_post_queue" ON fb_post_queue
+    FOR UPDATE USING (
+        EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin = true)
+    );
+
+-- =============================================
+-- 8. MIGRATION - Facebook Godkendelse (Kør på eksisterende database)
+-- =============================================
+
+-- Tilføj nye kolonner til carlistings (ignorer fejl hvis de allerede eksisterer)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'carlistings' AND column_name = 'fb_approval_status') THEN
+        ALTER TABLE carlistings ADD COLUMN fb_approval_status VARCHAR(20) DEFAULT 'not_eligible';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'carlistings' AND column_name = 'fb_posted_at') THEN
+        ALTER TABLE carlistings ADD COLUMN fb_posted_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+END $$;
+
+-- Tilføj is_admin til profiles (ignorer fejl hvis den allerede eksisterer)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'is_admin') THEN
+        ALTER TABLE profiles ADD COLUMN is_admin BOOLEAN DEFAULT false;
+    END IF;
+END $$;
+
+-- Opret index for fb_approval_status
+CREATE INDEX IF NOT EXISTS idx_carlistings_fb_approval_status ON carlistings(fb_approval_status);
+
+-- Opdater eksisterende listings: sæt fb_approval_status baseret på discount
+UPDATE carlistings 
+SET fb_approval_status = CASE 
+    WHEN discount > 0 THEN 'pending'
+    ELSE 'not_eligible'
+END
+WHERE fb_approval_status IS NULL OR fb_approval_status = 'not_eligible';
