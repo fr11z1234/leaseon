@@ -48,30 +48,32 @@ function getPrimaryImageUrl(listing: ListingData): string | null {
  * Add listing to Facebook post queue for n8n webhook
  */
 async function addToPostQueue(
-    supabase: ReturnType<typeof createClient>,
+    supabase: any,
     listing: ListingData
 ): Promise<{ success: boolean; queueId?: number; error?: string }> {
     const brandName = listing.brand_name || listing.carbrands?.brand_name || 'Ukendt';
     const listingUrl = `https://leaseon.dk/biler/${listing.listing_id}`;
     const primaryImageUrl = getPrimaryImageUrl(listing);
 
+    const queueData = {
+        listing_id: listing.listing_id,
+        brand_name: brandName,
+        model: listing.model,
+        variant: listing.variant || '',
+        model_year: listing.model_year,
+        discount: listing.discount,
+        payment: listing.payment || 0,
+        month_payment: listing.month_payment || 0,
+        km_status: listing.km_status || 0,
+        fuel_type: listing.fuel_type || '',
+        listing_url: listingUrl,
+        primary_image_url: primaryImageUrl,
+        status: 'pending'
+    };
+
     const { data, error } = await supabase
         .from('fb_post_queue')
-        .insert({
-            listing_id: listing.listing_id,
-            brand_name: brandName,
-            model: listing.model,
-            variant: listing.variant || '',
-            model_year: listing.model_year,
-            discount: listing.discount,
-            payment: listing.payment || 0,
-            month_payment: listing.month_payment || 0,
-            km_status: listing.km_status || 0,
-            fuel_type: listing.fuel_type || '',
-            listing_url: listingUrl,
-            primary_image_url: primaryImageUrl,
-            status: 'pending'
-        })
+        .insert(queueData)
         .select('id')
         .single();
 
@@ -86,7 +88,7 @@ async function addToPostQueue(
 /**
  * Verify that the current user is an admin
  */
-async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader: string | null): Promise<{ isAdmin: boolean; userId?: string; error?: string }> {
+async function verifyAdmin(supabase: any, authHeader: string | null): Promise<{ isAdmin: boolean; userId?: string; error?: string }> {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return { isAdmin: false, error: 'No authorization token provided' };
     }
@@ -118,7 +120,7 @@ async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader
  * Approve a listing and add to Facebook post queue for n8n webhook
  */
 export async function POST(request: NextRequest) {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase: any = createClient(supabaseUrl, supabaseKey);
 
     // Verify admin status
     const authHeader = request.headers.get('authorization');
@@ -199,7 +201,7 @@ export async function POST(request: NextRequest) {
  * Get all pending listings for approval
  */
 export async function GET(request: NextRequest) {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase: any = createClient(supabaseUrl, supabaseKey);
 
     // Verify admin status
     const authHeader = request.headers.get('authorization');
@@ -221,7 +223,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform the data
-    const transformedListings = listings?.map(listing => ({
+    const transformedListings = listings?.map((listing: any) => ({
         ...listing,
         brand_name: listing.carbrands?.brand_name || 'Ukendt',
         primary_image: listing.listingimages?.find((img: any) => img.is_primary)?.image_path
