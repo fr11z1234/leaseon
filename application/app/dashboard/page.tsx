@@ -30,41 +30,52 @@ export default function () {
         if (success) {
             router.push('/dashboard/biler');
         } else {
-            EventEmitter.emit('notify', 'forkert email eller password, prøv igen!');
+            EventEmitter.emit('notify', 'Forkert email eller password, prøv igen!');
         }
     }
 
     return (
-        <div className='w-full h-full min-h-[100vh] flex items-center justify-center overflow-hidden bg-black'>
-            <video autoPlay muted loop playsInline className='absolute z-0 w-full h-full min-w-full min-h-full pointer-events-none object-cover opacity-10'>
+        <div className='w-full min-h-screen flex items-center justify-center overflow-hidden bg-black py-10 px-4'>
+            <video autoPlay muted loop playsInline className='absolute inset-0 z-0 w-full h-full min-w-full min-h-full pointer-events-none object-cover opacity-10'>
                 <source src={'/video/carbgvidm.mp4'} type="video/mp4" />
             </video>
-            <div className='relative z-10 px-6 flex flex-col items-center justify-center  sm:px-20'>
-                <div className='flex flex-col w-full max-w-lg items-center justify-center px-7 bg-white py-10 rounded-lg sm:px-14 fade-in'>
-                    <Image src={logo} alt="Leaseon" className="w-[400px] h-auto mb-10" unoptimized />
-                    <form className='w-full flex flex-col gap-4' onSubmit={handleSubmit}>
-                        <div className='flex flex-col'>
-                            <label>Email:</label>
-                            <input className='input-own'
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                        <div className='flex flex-col'>
-                            <label>Password:</label>
-                            <input className='input-own'
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-                        <button className="primary-button" type="submit">Login</button>
-                        <Link href="/opret-bruger" className='font-bold text-center text-blue-600 mt-1 bg-blue-100 py-3 hover:bg-blue-200 transition ease-in-out'>
-                            Opret Ny Konto
-                        </Link>
-                    </form>
+            <div className='relative z-10 w-full max-w-md flex flex-col items-center gap-4'>
+                <div className='bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden fade-in w-full'>
+                    <div className='px-8 py-8'>
+                        <Image src={logo} alt="Leaseon" className="w-40 h-auto mx-auto mb-6" unoptimized />
+                        <form className='w-full flex flex-col gap-4' onSubmit={handleSubmit}>
+                            <div className='flex flex-col gap-1'>
+                                <label>Email</label>
+                                <input
+                                    className='input-own w-full'
+                                    type="email"
+                                    placeholder="din@email.dk"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+                            <div className='flex flex-col gap-1'>
+                                <label>Adgangskode</label>
+                                <input
+                                    className='input-own w-full'
+                                    type="password"
+                                    placeholder="Din adgangskode"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+                            <button className="primary-button w-full mt-2" type="submit">
+                                Log ind
+                            </button>
+                            <p className='text-center text-sm text-slate-500 mt-4'>
+                                Har du ikke en konto? <Link href="/opret-bruger" className='text-blue-500 hover:underline'>Opret ny konto</Link>
+                            </p>
+                        </form>
+                    </div>
                 </div>
+                <Link href="/" className='fade-in text-sm text-white/90 hover:text-white transition-colors' style={{ animationDelay: '0.25s' }}>
+                    Gå til forsiden
+                </Link>
             </div>
         </div>
     );

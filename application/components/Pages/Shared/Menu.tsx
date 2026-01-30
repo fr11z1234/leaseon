@@ -4,9 +4,11 @@ import Image from 'next/image';
 import logo from '@/img/logo.svg';
 import Sidebar from '@/components/Pages/Shared/Sidebar';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Menu() {
 
+    const pathname = usePathname();
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -17,6 +19,10 @@ export default function Menu() {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    if (pathname === '/dashboard') {
+        return null;
+    }
 
     return (
         <header className={`
