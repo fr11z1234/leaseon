@@ -9,6 +9,21 @@ import Link from "next/link";
 import EventEmitter from "@/EventEmitter";
 import { useRouter } from "next/navigation";
 import LoaderDark from "@/components/LoaderDark";
+import Loader from "@/components/Loader";
+
+// Helper function to format number with thousand separators
+const formatNumber = (value: string | number): string => {
+    if (!value && value !== 0) return '';
+    const num = typeof value === 'string' ? value.replace(/\./g, '') : value.toString();
+    const parsed = parseInt(num, 10);
+    if (isNaN(parsed)) return '';
+    return parsed.toLocaleString('da-DK');
+};
+
+// Helper function to parse formatted number back to raw number
+const parseFormattedNumber = (value: string): string => {
+    return value.replace(/\./g, '');
+};
 
 export default function () {
 
@@ -20,9 +35,12 @@ export default function () {
     const [selectedBrand, setSelectedBrand] = useState(null as any);
     const [selectedFiles, setSelectedFiles] = useState([] as any[]);
     const [selectedPreviews, setSelectedPreviews] = useState([] as any[]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleFormSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
+
         const internalListing = { ...listing } as any;
         internalListing.brand = internalListing.brand_name;
         internalListing.images = []
@@ -38,9 +56,11 @@ export default function () {
                 EventEmitter.emit('notify', 'Annonce oprettet');
                 router.push('/dashboard/biler');
             } else {
+                setIsSubmitting(false);
                 EventEmitter.emit('notify', 'Der er sket en fejl, prøv igen');
             }
         } catch (error) {
+            setIsSubmitting(false);
             EventEmitter.emit('notify', 'Der er sket en fejl, prøv igen');
         }
     }
@@ -64,6 +84,18 @@ export default function () {
         const { name, value } = e.target;
         const files = (e.target as HTMLInputElement).files ?? null;
         userStore.setState({ listing: { ...listing, [name]: files ? files[0] : value } });
+    };
+
+    // Handler for formatted number inputs (with thousand separators)
+    const handleFormattedNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const rawValue = parseFormattedNumber(value);
+        userStore.setState({ listing: { ...listing, [name]: rawValue } });
+    };
+
+    // Prevent scroll from changing number input values
+    const preventScrollChange = (e: React.WheelEvent<HTMLInputElement>) => {
+        e.currentTarget.blur();
     };
 
     const handleEquipmentChange = (equipment_id: any) => {
@@ -114,7 +146,7 @@ export default function () {
         if (testBrand) {
             setSelectedBrand(testBrand);
         }
-        
+
         const testData = {
             type: 'Personbil',
             brand_name: testBrand?.value || 'BMW',
@@ -140,7 +172,7 @@ export default function () {
             be_listed: 1,
             equipment: allEquipment.slice(0, 8).map(e => e.equipment_id),
         };
-        
+
         userStore.setState({ listing: { ...listing, ...testData } });
     };
 
@@ -153,12 +185,12 @@ export default function () {
                 <meta name="description" content={`Opret en leasingovertagelses annonce som privatperson på - leaseon.dk`} />
             </Head>
 
-            <form className="w-full flex-col flex justify-center items-center gap-8 px-2" onSubmit={handleFormSubmit}>
+            <form id="create-listing-form" className="w-full flex-col flex justify-center items-center gap-8 px-2" onSubmit={handleFormSubmit}>
                 {/* Dev Test Button */}
                 {process.env.NODE_ENV === 'development' && (
                     <div className='flex flex-col w-full max-w-[800px] items-end'>
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             onClick={fillTestData}
                             className='bg-orange-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-600 transition'
                         >
@@ -166,7 +198,7 @@ export default function () {
                         </button>
                     </div>
                 )}
-                
+
                 {/* Biloplysninger start */}
                 <div className='flex flex-col w-full max-w-[800px] items-center justify-center bg-white h-auto rounded-lg border-gray-200 border'>
                     <div className=" w-full flex flex-col px-8 justify-between gap-6 py-12 sm:px-20">
@@ -234,7 +266,7 @@ export default function () {
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="model_year">Årgang*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="model_year" name="model_year" placeholder="Indtast årgang..." value={listing.model_year || ''} onChange={handleInputChange} min="1000" max="9999" />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="model_year" name="model_year" placeholder="Indtast årgang..." value={listing.model_year || ''} onChange={handleInputChange} onWheel={preventScrollChange} min="1000" max="9999" />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="fuel_type">Brændstof*</label>
@@ -271,7 +303,7 @@ export default function () {
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="horsepower">Hestekræfter*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="horsepower" name="horsepower" placeholder="Antal Hestekræfter..." value={listing.horsepower || ''} onChange={handleInputChange} min="0" max="1000" />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="horsepower" name="horsepower" placeholder="Antal Hestekræfter..." value={listing.horsepower || ''} onChange={handleInputChange} onWheel={preventScrollChange} min="0" max="1000" />
                         </div>
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
@@ -339,7 +371,7 @@ export default function () {
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="kms_status">Kilometerstand *</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="km_status" name="km_status" placeholder="Antal Kørte km..." value={listing.km_status || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="text" id="km_status" name="km_status" placeholder="Antal Kørte km..." value={formatNumber(listing.km_status)} onChange={handleFormattedNumberChange} />
                         </div>
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
@@ -409,23 +441,23 @@ export default function () {
                         <p className='text-gray-400 text-xs -mt-4 mb-6'>Udbetalingen skal skrives som den står på aftalen, ikke med din præmie trukket fra. <br></br><br></br> <b>Restværdi er eksl. moms</b></p>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="payment">Udbetaling DKK*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="payment" name="payment" placeholder="Den fulde udbetaling inkl moms." value={listing.payment || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="text" id="payment" name="payment" placeholder="Den fulde udbetaling inkl moms." value={formatNumber(listing.payment)} onChange={handleFormattedNumberChange} />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="month_payment">Mnd Ydelse DKK*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="month_payment" name="month_payment" placeholder="Mnd. Ydelse inkl moms." value={listing.month_payment || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="text" id="month_payment" name="month_payment" placeholder="Mnd. Ydelse inkl moms." value={formatNumber(listing.month_payment)} onChange={handleFormattedNumberChange} />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="restvalue">Restværdi DKK*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="restvalue" name="restvalue" placeholder="Restværdien Eksl Moms" value={listing.restvalue || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="text" id="restvalue" name="restvalue" placeholder="Restværdien Eksl Moms" value={formatNumber(listing.restvalue)} onChange={handleFormattedNumberChange} />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="discount">Præmie DKK*💸 </label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="discount" name="discount" placeholder="Beløbet du er villig til at betale for overtagelse" value={listing.discount || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="text" id="discount" name="discount" placeholder="Beløbet du er villig til at betale for overtagelse" value={formatNumber(listing.discount)} onChange={handleFormattedNumberChange} />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="lease_period">Leasing Periode i mnd.</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="lease_period" name="lease_period" placeholder="eks 12 mnd." value={listing.lease_period || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' required type="number" id="lease_period" name="lease_period" placeholder="eks 12 mnd." value={listing.lease_period || ''} onChange={handleInputChange} onWheel={preventScrollChange} />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="condition_status">Leasing Type*</label>
@@ -480,16 +512,33 @@ export default function () {
                 </div>
                 {/* Betalings Oplysninger slut */}
 
-                {/* Form Submission Section */}
-                <div className='flex flex-row w-full max-w-[800px] items-center justify-end bg-white h-auto rounded-lg border-gray-200 border p-6 mb-12 sticky bottom-0'>
-                    <div className='flex flex-row gap-4'>
-                        <Link href="/dashboard/biler">
-                            <button className='border-button h-full text-red-500'>Annuller</button>
-                        </Link>
-                        <button className='primary-button' type="submit">Opret annonce</button>
-                    </div>
-                </div>
+                {/* Spacer for fixed bottom bar */}
+                <div className='h-24 sm:h-20'></div>
             </form>
+
+            {/* Fixed bottom action bar */}
+            <div className='fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50'>
+                <div className='flex flex-row w-full max-w-[800px] mx-auto items-center justify-end px-6 py-4 gap-4'>
+                    <Link href="/dashboard/biler">
+                        <button className='border-button h-full text-red-500' type="button" disabled={isSubmitting}>Annuller</button>
+                    </Link>
+                    <button
+                        form="create-listing-form"
+                        className='primary-button flex items-center justify-center gap-2 min-w-[150px]'
+                        type="submit"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader />
+                                <span>Opretter...</span>
+                            </>
+                        ) : (
+                            'Opret annonce'
+                        )}
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }

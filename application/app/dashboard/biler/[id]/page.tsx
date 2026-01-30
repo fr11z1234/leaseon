@@ -2,6 +2,7 @@
 
 import { userStore } from "@/stores/UserStore";
 import Head from "next/head";
+import Select from 'react-select';
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import DefaultListing from "@/types/Listing";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,21 @@ import loadingLottie from '@/lottie/loading.json';
 import { Player } from '@lottiefiles/react-lottie-player';
 import { eq } from "lodash";
 import { getImageUrl } from "@/utils/img";
+import Loader from "@/components/Loader";
+
+// Helper function to format number with thousand separators
+const formatNumber = (value: string | number): string => {
+    if (!value && value !== 0) return '';
+    const num = typeof value === 'string' ? value.replace(/\./g, '') : value.toString();
+    const parsed = parseInt(num, 10);
+    if (isNaN(parsed)) return '';
+    return parsed.toLocaleString('da-DK');
+};
+
+// Helper function to parse formatted number back to raw number
+const parseFormattedNumber = (value: string): string => {
+    return value.replace(/\./g, '');
+};
 
 type Props = {
     params: { id: number };
@@ -23,23 +39,34 @@ export default function ({ params }: Props) {
     const fetching = userStore((s) => s.fetching);
     const listing = userStore((s) => s.listing);
     const allEquipment = carStore((s) => s.equipment);
+    const brands = carStore((s) => s.brands);
     const [primaryImageIndex, setPrimaryImageIndex] = useState(null as null | number);
     const [primaryImagePath, setPrimaryImagePath] = useState('');
     const [imagesToRemove, setImagesToRemove] = useState([] as string[]);
     const [selectedFiles, setSelectedFiles] = useState([] as any[]);
     const [selectedPreviews, setSelectedPreviews] = useState([] as any[]);
+    const [selectedBrand, setSelectedBrand] = useState(null as any);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const router = useRouter();
 
     useEffect(() => {
         userStore.setState({ listing: DefaultListing() });
         carStore.getState().fetchEquipment();
+        carStore.getState().fetchBrands(true);
         userStore.getState().checkAuth().then(async (isLoggedIn) => {
             if (isLoggedIn) {
                 await userStore.getState().fetchListing(params.id);
-                setPrimaryImagePath(listing?.primaryImage?.path || '');
-                setPrimaryImageIndex(listing?.primaryImage?.index || null);
+                const fetchedListing = userStore.getState().listing;
+                setPrimaryImagePath(fetchedListing?.primaryImage?.path || '');
+                setPrimaryImageIndex(fetchedListing?.primaryImage?.index || null);
 
+                // Set selected brand based on listing data
+                const allBrands = carStore.getState().brands;
+                const currentBrand = allBrands.find((b: any) => b.id === fetchedListing?.brand_id);
+                if (currentBrand) {
+                    setSelectedBrand(currentBrand);
+                }
             } else {
                 router.push('/dashboard');
             }
@@ -48,6 +75,7 @@ export default function ({ params }: Props) {
 
     const handleFormSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
         const path = await userStore.getState().uploadImages(selectedFiles, listing.listing_id, primaryImageIndex);
 
@@ -66,6 +94,7 @@ export default function ({ params }: Props) {
             EventEmitter.emit('notify', 'Dine ændringer er blevet gemt!');
             router.push('/dashboard/biler');
         } else {
+            setIsSubmitting(false);
             EventEmitter.emit('notify', 'Der skete en fejl under gemning af dine ændringer, prøv igen eller kontakt os for hjælp.');
         }
     }
@@ -74,6 +103,27 @@ export default function ({ params }: Props) {
         const { name, value } = e.target;
         const files = (e.target as HTMLInputElement).files ?? null;
         userStore.setState({ listing: { ...listing, [name]: files ? files[0] : value } });
+    };
+
+    // Handler for formatted number inputs (with thousand separators)
+    const handleFormattedNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const rawValue = parseFormattedNumber(value);
+        userStore.setState({ listing: { ...listing, [name]: rawValue } });
+    };
+
+    // Prevent scroll from changing number input values
+    const preventScrollChange = (e: React.WheelEvent<HTMLInputElement>) => {
+        e.currentTarget.blur();
+    };
+
+    const handleBrandChange = async (option: any) => {
+        if (option) {
+            await userStore.setState({ listing: { ...listing, brand_name: option.value, brand_id: option.id } });
+            setSelectedBrand(option);
+        } else {
+            setSelectedBrand(null);
+        }
     };
 
     const handleEquipmentChange = async (equipment_id: number) => {
@@ -184,7 +234,7 @@ export default function ({ params }: Props) {
 
     return (
         <div className="flex flex-col w-full items-center justify-center bg-custom-background min-h-screen pt-24 sm:pt-32 overflow-x-hidden">
-            <form className="w-full flex-col flex justify-center items-center gap-8 px-2" onSubmit={handleFormSubmit}>
+            <form id="edit-listing-form" className="w-full flex-col flex justify-center items-center gap-8 px-2" onSubmit={handleFormSubmit}>
                 <Head>
                     <title>Leaseon.dk - Rediger Annoncen for {listing.model} {listing.variant}</title>
                     <meta name="description" content={`Opret din konto på den eneste leasingannoncerings platform for private - leasingovertagelser - leaseon.dk`} />
@@ -205,6 +255,20 @@ export default function ({ params }: Props) {
                                 <option value="Personbil">Personbil</option>
                                 <option value="Varebil">Varebil</option>
                             </select>
+                        </div>
+                        <div className='flex relative flex-col w-full justify-start items-start sm:flex-row sm:justify-between sm:items-center'>
+                            <label htmlFor="brand_id">Bilmærke*</label>
+                            <Select
+                                id="brand_id"
+                                name="brand_id"
+                                options={brands}
+                                value={selectedBrand}
+                                onChange={handleBrandChange}
+                                isClearable
+                                isSearchable
+                                placeholder="Vælg Bilmærke"
+                                className="w-full sm:min-w-[400px] max-w-[500px]"
+                            />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="model">Model *</label>
@@ -235,7 +299,7 @@ export default function ({ params }: Props) {
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="model_year">Årgang*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="model_year" name="model_year" value={listing.model_year || ''} onChange={handleInputChange} min="1000" max="9999" />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="model_year" name="model_year" value={listing.model_year || ''} onChange={handleInputChange} onWheel={preventScrollChange} min="1000" max="9999" />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="fuel_type">Brændstof*</label>
@@ -271,7 +335,7 @@ export default function ({ params }: Props) {
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="horsepower">Hestekræfter*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="horsepower" name="horsepower" value={listing.horsepower || ''} onChange={handleInputChange} min="0" max="1000" />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="horsepower" name="horsepower" value={listing.horsepower || ''} onChange={handleInputChange} onWheel={preventScrollChange} min="0" max="1000" />
                         </div>
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
@@ -332,7 +396,7 @@ export default function ({ params }: Props) {
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="kms_status">Kilometerstand *</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="km_status" name="km_status" value={listing.km_status || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="text" id="km_status" name="km_status" value={formatNumber(listing.km_status)} onChange={handleFormattedNumberChange} />
                         </div>
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
@@ -416,20 +480,20 @@ export default function ({ params }: Props) {
                         <p className='text-gray-400 text-xs -mt-4 mb-6'>Udbetalingen skal skrives som den står på aftalen, ikke med din præmie trukket fra.</p>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="payment">Udbetaling DKK*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="payment" name="payment" value={listing.payment || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="text" id="payment" name="payment" value={formatNumber(listing.payment)} onChange={handleFormattedNumberChange} />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="month_payment">Mnd Ydelse DKK*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="month_payment" name="month_payment" value={listing.month_payment || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="text" id="month_payment" name="month_payment" value={formatNumber(listing.month_payment)} onChange={handleFormattedNumberChange} />
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="restvalue">Restværdi DKK*</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="restvalue" name="restvalue" value={listing.restvalue || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="text" id="restvalue" name="restvalue" value={formatNumber(listing.restvalue)} onChange={handleFormattedNumberChange} />
                         </div>
                         <div className='flex flex-col gap-1'>
                             <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                                 <label htmlFor="discount">Præmie DKK*💸 </label>
-                                <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="discount" name="discount" value={listing.discount || ''} onChange={handleInputChange} />
+                                <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="text" id="discount" name="discount" value={formatNumber(listing.discount)} onChange={handleFormattedNumberChange} />
                             </div>
                         </div>
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
@@ -453,7 +517,7 @@ export default function ({ params }: Props) {
 
                         <div className='flex flex-col w-full justify-start  items-start sm:flex-row sm:justify-between sm:items-center'>
                             <label htmlFor="lease_period">Leasing Periode i mnd.</label>
-                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="lease_period" name="lease_period" value={listing.lease_period || ''} onChange={handleInputChange} />
+                            <input className='input-own w-full sm:min-w-[400px] max-w-[500px]' type="number" id="lease_period" name="lease_period" value={listing.lease_period || ''} onChange={handleInputChange} onWheel={preventScrollChange} />
                         </div>
 
                         {/* Instant Takeover Radio Buttons */}
@@ -515,17 +579,38 @@ export default function ({ params }: Props) {
                     </div>
                 </div>
                 {/* Betalings Oplysninger slut */}
-                <div className='flex flex-col sm:flex-row-reverse w-full max-w-[800px] items-center justify-between bg-white h-auto rounded-lg border-gray-200 border px-6 py-6 sm:py-6 sticky bottom-0 gap-2 sm:gap-4 mb-8'>
-                    <button className='primary-button w-full sm:w-fit text-white bg-blue-500 p-2 sm:p-4 rounded transition ease-in duration-100 hover:bg-blue-600' type="submit">Gem Ændringer</button>
-                    <Link href="/dashboard/biler" className='d-flex justify-end w-full sm:w-fit border-button text-red-500 p-2 sm:p-4 rounded transition ease-in duration-100 hover:opacity-30'>Annuller</Link>
+
+                {/* Spacer for fixed bottom bar */}
+                <div className='h-24 sm:h-20'></div>
+
+            </form >
+
+            {/* Fixed bottom action bar */}
+            <div className='fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50'>
+                <div className='flex flex-col sm:flex-row-reverse w-full max-w-[800px] mx-auto items-center justify-between px-6 py-4 gap-2 sm:gap-4'>
+                    <button
+                        form="edit-listing-form"
+                        className='primary-button w-full sm:w-fit text-white bg-blue-500 p-2 sm:p-4 rounded transition ease-in duration-100 hover:bg-blue-600 flex items-center justify-center gap-2 min-w-[180px]'
+                        type="submit"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader />
+                                <span>Gemmer...</span>
+                            </>
+                        ) : (
+                            'Gem Ændringer'
+                        )}
+                    </button>
+                    <Link href="/dashboard/biler" className={`d-flex justify-center w-full sm:w-fit border-button text-red-500 p-2 sm:p-4 rounded transition ease-in duration-100 hover:opacity-30 ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}>Annuller</Link>
                     <div className='flex flex-row gap-2 sm:gap-4 justify-end flex-grow'>
-                        <button type="button" className='delete-button w-[180px] text-red-500 p-2 sm:p-4 rounded transition ease-in duration-100' onClick={handleDeleteListing}>
+                        <button type="button" className='delete-button w-[180px] text-red-500 p-2 sm:p-4 rounded transition ease-in duration-100' onClick={handleDeleteListing} disabled={isSubmitting}>
                             Slet Annoncen
                         </button>
                     </div>
                 </div>
-
-            </form >
+            </div>
         </div >
     );
 }
