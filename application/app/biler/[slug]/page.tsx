@@ -7,6 +7,9 @@ import PriceOverview from '@/components/Pages/Bil/PriceOverview';
 import { listingStore } from '@/stores/ListingStore';
 import { Metadata } from 'next';
 
+// Force dynamic rendering to always fetch fresh data from the database
+export const dynamic = 'force-dynamic';
+
 type Props = {
     params: { slug: string };
 };
