@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import LoginOrProfileButton from '@/components/Pages/Shared/LoginOrProfileButton';
-import adImg from '@/img/sidebarAnnonce.jpg';
+import adImg from '@/img/sidebarAnnonce.png';
 import logo from '@/img/logo.svg';
 import { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -117,8 +117,27 @@ const Sidebar = () => {
                         )}
                     </nav>
                     <div className="mt-auto p-4 sm:p-6 pt-0 border-t border-slate-100">
-                        <Link href="/dashboard/biler/opret" onClick={toggleSidebar} className="block rounded-lg overflow-hidden hover:opacity-95 transition-opacity">
-                            <Image className="w-full" src={adImg} alt="Gratis annoncer i begrænset periode" />
+                        <Link
+                            href="/dashboard/biler/opret"
+                            onClick={toggleSidebar}
+                            className="block rounded-lg overflow-hidden min-h-[180px] hover:opacity-95 transition-opacity relative"
+                            style={{ backgroundImage: `url(${adImg.src})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                        >
+                            {/* Mørk blå overlay som på referencebilledet */}
+                            <span className="absolute inset-0 bg-blue-900/70" aria-hidden />
+                            {/* Indhold: tekst + pil */}
+                            <span className="relative flex flex-col justify-between h-full min-h-[180px] p-4 text-white">
+                                <span className="flex flex-col gap-0.5">
+                                    <span className="text-lg sm:text-xl font-bold leading-tight">Gratis Annonce</span>
+                                    <span className="text-xs sm:text-sm font-normal opacity-95">Tidsbegrænset tilbud</span>
+                                </span>
+                                <span className="flex items-center justify-between mt-auto pt-3">
+                                    <span className="text-sm font-medium">Find en ny leasingtager</span>
+                                    <svg className="w-5 h-5 shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </span>
+                            </span>
                         </Link>
                     </div>
                 </div>
