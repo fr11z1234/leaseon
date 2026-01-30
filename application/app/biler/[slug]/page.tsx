@@ -6,6 +6,7 @@ import EstimationOverview from '@/components/Pages/Bil/EstimationOverview';
 import PriceOverview from '@/components/Pages/Bil/PriceOverview';
 import { supabase } from '@/utils/supabase/server';
 import { Metadata } from 'next';
+import { unstable_noStore as noStore } from 'next/cache';
 
 // Force dynamic rendering to always fetch fresh data from the database
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,9 @@ type Props = {
 
 // Helper function to fetch listing data directly from Supabase
 async function fetchListing(carId: string) {
+    // Opt out of caching for this data fetch
+    noStore();
+
     const { data, error } = await supabase
         .from('carlistings')
         .select('*, listingimages(image_path, is_primary), carbrands(brand_id, brand_name), carlistingequipment(equipment_id), equipment(equipment_id, name)')
