@@ -36,7 +36,7 @@ export default function () {
 
     return (
         <div className='w-full h-full min-h-[100vh] flex items-center justify-center overflow-hidden bg-black'>
-            <video autoPlay muted loop playsInline className='absolute z-0 w-auto pointer-events-none h-screen object-cover opacity-10 '>
+            <video autoPlay muted loop playsInline className='absolute z-0 w-full h-full min-w-full min-h-full pointer-events-none object-cover opacity-10'>
                 <source src={'/video/carbgvidm.mp4'} type="video/mp4" />
             </video>
             <div className='relative z-10 px-6 flex flex-col items-center justify-center  sm:px-20'>
