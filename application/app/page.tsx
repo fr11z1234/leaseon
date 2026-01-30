@@ -12,9 +12,9 @@ export default function () {
     <main>
       <HeroSection />
       <TypeSection />
-      <ShareSection />
-      <AboutSection />
       <DiscountSection />
+      <AboutSection />
+      <ShareSection />
       <WhySection />
       <NewestSection />
     </main>
