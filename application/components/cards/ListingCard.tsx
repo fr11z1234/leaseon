@@ -48,9 +48,10 @@ const ListingCard = ({ car }: any) => {
       <div className="flex flex-col p-5 gap-1">
         <h4 className="text-lg text-white sm:text-lg">{car.brand_name}</h4>
         <h5 className="text-sm text-white">{car.model} {car.variant}</h5>
-        <h3 className="text-card text-white"> {((car.payment - car.discount) ?? 0).toLocaleString('de-DE')} DKK <span
-          className="text-text opacity-20 line-through">{(car.payment ?? 0).toLocaleString('de-DE')} DKK</span>
-        </h3>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-card text-white">{(car.payment - car.discount ?? 0).toLocaleString('de-DE')} DKK</span>
+          <span className="text-text opacity-60 line-through text-white">{(car.payment ?? 0).toLocaleString('de-DE')} DKK</span>
+        </div>
       </div>
 
       <div className="flex p-5 border-y border-y-white border-opacity-20">
